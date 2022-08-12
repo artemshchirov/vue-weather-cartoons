@@ -19,16 +19,16 @@
       </div>
       <div class="weather-wrap" v-if="typeof weather.main !== `undefined`">
         <div class="location-box">
-          <div class="location">
-            {{ weather.name }}, {{ weather.sys.country }}
-          </div>
-          <div class="date">{{ dateBuilder() }}</div>
+          <p class="location">{{ weather.name }}, {{ weather.sys.country }}</p>
+          <p class="date">{{ dateBuilder() }}</p>
         </div>
         <div class="weather-box">
-          <div class="temp">{{ Math.round(weather.main.temp) }}°C</div>
-          <div class="weather">{{ weather.weather[0].main }}</div>
+          <p class="temp">{{ Math.round(weather.main.temp) }}°C</p>
+          <p class="weather">{{ weather.weather[0].main }}</p>
         </div>
       </div>
+
+      <p class="cartoon">{{ setCartoon() }}</p>
     </main>
   </div>
 </template>
@@ -44,7 +44,26 @@ export default {
       weather: {},
     };
   },
+  created() {
+    this.fetchWeatherDefault();
+    this.setCartoon();
+  },
+
   methods: {
+    fetchWeatherDefault(city = 'Haifa') {
+      fetch(
+        `${this.url_base}weather?q=${city}&units=metric&APPID=${this.api_key}`
+      )
+        .then((res) => res.json())
+        .then((res) => {
+          console.log('==============================');
+          console.log('res: ', res);
+          console.log('res.main: ', res.main);
+          console.log('res.main.temp: ', res.main.temp);
+          this.setResults(res);
+        });
+    },
+
     fetchWeather(e) {
       if (e.key === 'Enter') {
         fetch(
@@ -54,10 +73,27 @@ export default {
           .then(this.setResults);
       }
     },
+
     setResults(results) {
-      console.log('results: ', results.weather[0].main);
+      this.temp = Math.round(results.main.temp);
       this.weather = results;
     },
+
+    setCartoon() {
+      console.log('this.temp: ', this.temp);
+      switch (true) {
+        case this.temp < 0:
+          return 'Love Death + Robots';
+        case this.temp > 0:
+          return 'Solar Opposites';
+        case this.temp > 15:
+          return 'Final Space';
+        case this.temp > 35:
+          return 'BoJack Horseman';
+      }
+      return this.temp;
+    },
+
     dateBuilder() {
       let d = new Date();
 
@@ -203,5 +239,15 @@ main {
   font-weight: 700;
   font-style: italic;
   text-shadow: 3px 6px rgba(0, 0, 0, 0.25);
+}
+
+.cartoon {
+  color: #fff;
+  font-size: 32px;
+  font-weight: 500;
+  text-align: center;
+  text-shadow: 1px 3px rgba(0, 0, 0, 0.25);
+
+  margin-top: 30px;
 }
 </style>
