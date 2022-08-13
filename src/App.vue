@@ -1,12 +1,5 @@
 <template>
-  <div
-    id="app"
-    :class="
-      typeof weather.main !== `undefined` && weather.main.temp < 16
-        ? 'cold'
-        : ''
-    "
-  >
+  <div id="app" :class="typeof weather.main !== `undefined` && setBackground()">
     <main>
       <div class="search-box">
         <input
@@ -26,9 +19,8 @@
           <p class="temp">{{ Math.round(weather.main.temp) }}°C</p>
           <p class="weather">{{ weather.weather[0].main }}</p>
         </div>
+        <p class="cartoon">{{ setCartoon() }}</p>
       </div>
-
-      <p class="cartoon">{{ setCartoon() }}</p>
     </main>
   </div>
 </template>
@@ -42,6 +34,7 @@ export default {
       url_base: 'http://api.openweathermap.org/data/2.5/',
       query: '',
       weather: {},
+      selectedIndex: -1,
     };
   },
   created() {
@@ -50,28 +43,25 @@ export default {
   },
 
   methods: {
-    fetchWeatherDefault(city = 'Haifa') {
-      fetch(
-        `${this.url_base}weather?q=${city}&units=metric&APPID=${this.api_key}`
-      )
-        .then((res) => res.json())
-        .then((res) => {
-          console.log('==============================');
-          console.log('res: ', res);
-          console.log('res.main: ', res.main);
-          console.log('res.main.temp: ', res.main.temp);
-          this.setResults(res);
-        });
-    },
-
     fetchWeather(e) {
       if (e.key === 'Enter') {
         fetch(
           `${this.url_base}weather?q=${this.query}&units=metric&APPID=${this.api_key}`
         )
           .then((res) => res.json())
-          .then(this.setResults);
+          .then((res) => {
+            this.setResults(res);
+            this.setCartoon();
+          });
       }
+    },
+
+    fetchWeatherDefault(city = 'Haifa') {
+      fetch(
+        `${this.url_base}weather?q=${city}&units=metric&APPID=${this.api_key}`
+      )
+        .then((res) => res.json())
+        .then(this.setResults);
     },
 
     setResults(results) {
@@ -80,18 +70,33 @@ export default {
     },
 
     setCartoon() {
-      console.log('this.temp: ', this.temp);
       switch (true) {
-        case this.temp < 0:
-          return 'Love Death + Robots';
-        case this.temp > 0:
-          return 'Solar Opposites';
-        case this.temp > 15:
-          return 'Final Space';
         case this.temp > 35:
           return 'BoJack Horseman';
+        case this.temp > 15:
+          return 'Final Space';
+        case this.temp > 0:
+          return 'Solar Opposites';
+        case this.temp < 0:
+          return 'Love Death + Robots';
+        default:
+          return 'Ed, Edd n Eddy';
       }
-      return this.temp;
+    },
+
+    setBackground() {
+      switch (true) {
+        case this.temp > 35:
+          return 'bgc-4';
+        case this.temp > 15:
+          return 'bgc-3';
+        case this.temp > 0:
+          return 'bgc-2';
+        case this.temp < 0:
+          return 'bgc-1';
+        default:
+          return 'bgc-0';
+      }
     },
 
     dateBuilder() {
@@ -148,14 +153,32 @@ body {
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  background-image: url('./assets/warm-bg.jpg');
+  background-color: black;
   background-size: cover;
-  background-position: bottom;
+  background-repeat: no-repeat;
+  background-position: top;
   transition: 0.4s;
+  position: relative;
 }
 
-#app.cold {
-  background-image: url('./assets/cold-bg.jpg');
+#app.bgc-0 {
+  background-image: url('./assets/bgc-0.jpg');
+}
+
+#app.bgc-1 {
+  background-image: url('./assets/bgc-1.jpg');
+}
+
+#app.bgc-2 {
+  background-image: url('./assets/bgc-2.jpg');
+}
+
+#app.bgc-3 {
+  background-image: url('./assets/bgc-3.jpg');
+}
+
+#app.bgc-4 {
+  background-image: url('./assets/bgc-4.jpg');
 }
 
 main {
@@ -192,10 +215,34 @@ main {
   transition: 0.4s;
 }
 
+.search-box .search-bar::placeholder {
+  color: whitesmoke;
+  opacity: 1;
+}
+
 .search-box .search-bar:focus {
   box-shadow: 0 0 16px rgba(255, 255, 255, 0.25);
   background-color: rgba(255, 255, 255, 0.75);
   border-radius: 16px 0 16px 0;
+}
+
+.weather-wrap {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin: auto;
+  padding: 25px;
+  max-width: max-content;
+  max-height: max-content;
+
+  text-shadow: 3px 6px rgba(0, 0, 0, 0.25);
+  background-color: rgba(255, 255, 255, 0.25);
+  border-radius: 16px;
+  backdrop-filter: blur(5px);
+
+  box-shadow: 3px 6px rgba(0, 0, 0, 0.25);
 }
 
 .location-box .location {
@@ -243,11 +290,17 @@ main {
 
 .cartoon {
   color: #fff;
-  font-size: 32px;
+  font-size: 64px;
   font-weight: 500;
   text-align: center;
   text-shadow: 1px 3px rgba(0, 0, 0, 0.25);
 
   margin-top: 30px;
+
+  text-transform: uppercase;
+  background: linear-gradient(to right, white 0%, pink 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 </style>
