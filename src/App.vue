@@ -33,17 +33,11 @@
 <script>
 import UserLocation from './components/UserLocation.vue';
 
-const platform = new window.H.service.Platform({
-  apikey: 'gU56sivzmwGYIQ9nYkHQgcfFjjxUCrCeqJr358UgHpw',
-  // apikey: 'iEnZe8bO68AnNVZEdPpq7hl9UFqiPxTSPjQkLfR3Qcg',
-});
-const geocoder = platform.getGeocodingService();
-
 export default {
+  el: '#app',
   components: {
     UserLocation,
   },
-  name: 'App',
   data() {
     return {
       api_key: 'd1cbf50ad630c263341b5810669be5a1',
@@ -59,40 +53,6 @@ export default {
   },
 
   methods: {
-    async getLocation() {
-      return new Promise((resolve, reject) => {
-        if (!('geolocation' in navigator)) {
-          reject(new Error('Geolocation is not available.'));
-        }
-
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            let reverseGeocodingParameters = {
-              prox: `${pos.coords.latitude},${pos.coords.longitude}`,
-              mode: 'retrieveAddresses',
-              maxresults: 1,
-            };
-
-            geocoder.reverseGeocode(
-              reverseGeocodingParameters,
-              (res) => {
-                let results = res.Response.View;
-                if (results.length === 0) {
-                  resolve('No match.');
-                } else {
-                  resolve(results[0].Result[0].Location);
-                }
-              },
-              (e) => reject(e)
-            );
-          },
-          (err) => {
-            reject(err);
-          }
-        );
-      });
-    },
-
     fetchWeather(e) {
       if (e.key === 'Enter') {
         fetch(
