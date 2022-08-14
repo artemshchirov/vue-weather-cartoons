@@ -1,5 +1,9 @@
 <template>
-  <div id="app" :class="typeof weather.main !== `undefined` && setBackground()">
+  <div
+    id="app"
+    :class="typeof weather.main !== `undefined` && setBackground()"
+    v-cloak
+  >
     <main>
       <div class="search-box">
         <input
@@ -20,13 +24,25 @@
           <p class="weather">{{ weather.weather[0].main }}</p>
         </div>
         <p class="cartoon">{{ setCartoon() }}</p>
+        <user-location></user-location>
       </div>
     </main>
   </div>
 </template>
 
 <script>
+import UserLocation from './components/UserLocation.vue';
+
+const platform = new window.H.service.Platform({
+  apikey: 'gU56sivzmwGYIQ9nYkHQgcfFjjxUCrCeqJr358UgHpw',
+  // apikey: 'iEnZe8bO68AnNVZEdPpq7hl9UFqiPxTSPjQkLfR3Qcg',
+});
+const geocoder = platform.getGeocodingService();
+
 export default {
+  components: {
+    UserLocation,
+  },
   name: 'App',
   data() {
     return {
@@ -43,6 +59,40 @@ export default {
   },
 
   methods: {
+    async getLocation() {
+      return new Promise((resolve, reject) => {
+        if (!('geolocation' in navigator)) {
+          reject(new Error('Geolocation is not available.'));
+        }
+
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            let reverseGeocodingParameters = {
+              prox: `${pos.coords.latitude},${pos.coords.longitude}`,
+              mode: 'retrieveAddresses',
+              maxresults: 1,
+            };
+
+            geocoder.reverseGeocode(
+              reverseGeocodingParameters,
+              (res) => {
+                let results = res.Response.View;
+                if (results.length === 0) {
+                  resolve('No match.');
+                } else {
+                  resolve(results[0].Result[0].Location);
+                }
+              },
+              (e) => reject(e)
+            );
+          },
+          (err) => {
+            reject(err);
+          }
+        );
+      });
+    },
+
     fetchWeather(e) {
       if (e.key === 'Enter') {
         fetch(
@@ -265,11 +315,15 @@ main {
   text-align: center;
 }
 
+.temp {
+  margin: 25px 0;
+}
+
 .weather-box .temp {
   display: inline-block;
   padding: 10px 25px;
   color: #fff;
-  font-size: 102px;
+  font-size: 64px;
   font-weight: 900;
 
   text-shadow: 3px 6px rgba(0, 0, 0, 0.25);
@@ -282,7 +336,7 @@ main {
 
 .weather-box .weather {
   color: #fff;
-  font-size: 48px;
+  font-size: 32px;
   font-weight: 700;
   font-style: italic;
   text-shadow: 3px 6px rgba(0, 0, 0, 0.25);
@@ -290,12 +344,12 @@ main {
 
 .cartoon {
   color: #fff;
-  font-size: 64px;
+  font-size: 50px;
   font-weight: 500;
   text-align: center;
   text-shadow: 1px 3px rgba(0, 0, 0, 0.25);
 
-  margin-top: 30px;
+  margin: 25px 0;
 
   text-transform: uppercase;
   background: linear-gradient(to right, white 0%, pink 100%);
